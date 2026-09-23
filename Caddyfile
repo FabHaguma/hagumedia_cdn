@@ -1,0 +1,39 @@
+{
+    admin off
+    order rate_limit before basicauth
+}
+
+# Set DOMAIN in .env (e.g. cdn.example.com) to get automatic HTTPS.
+# Defaults to plain :80 for IP-only/local testing.
+{$DOMAIN} {
+    encode gzip
+
+    # Serve images directly from disk, cached aggressively (immutable, UUID-named files).
+    handle_path /storage/* {
+        root * /srv/storage
+        file_server
+        header Cache-Control "public, max-age=31536000, immutable"
+    }
+
+    # Everything else goes to the Fastify API, with a hard body-size cap and
+    # basic per-IP rate limiting to blunt automated spam uploads.
+    handle /api/* {
+        request_body {
+            max_size 10MB
+        }
+
+        rate_limit {
+            zone api_zone {
+                key {remote_host}
+                events 30
+                window 1m
+            }
+        }
+
+        reverse_proxy api:3000
+    }
+
+    handle {
+        respond "Not Found" 404
+    }
+}

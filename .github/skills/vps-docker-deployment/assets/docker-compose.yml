@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  client_app: # Rename this service to client_<app_name> or frontend_<app_name>
+    image: client/frontend_${APP_NAME}
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    networks:
+      - caddy_network
+      - app_network
+    restart: unless-stopped
+    depends_on:
+      - server_app # Update to match the server service name
+
+  server_app: # Rename this service to server_<app_name> or backend_<app_name>
+    image: server/backend_${APP_NAME}
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    environment:
+      - PORT=3000
+    networks:
+      - app_network
+    restart: unless-stopped
+
+networks:
+  caddy_network:
+    external: true
+  app_network:
+    driver: bridge
