@@ -3,9 +3,9 @@
     order rate_limit before basicauth
 }
 
-# Set DOMAIN in .env (e.g. cdn.example.com) to get automatic HTTPS.
-# Defaults to plain :80 for IP-only/local testing.
-{$DOMAIN} {
+# Plain HTTP: this Caddy is internal-only. The VPS's existing edge Caddy
+# terminates TLS for the public domain and reverse-proxies here by container name.
+:80 {
     encode gzip
 
     # Serve images directly from disk, cached aggressively (immutable, UUID-named files).

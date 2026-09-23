@@ -16,13 +16,25 @@ npm run dev
 ```
 
 ## Running the full stack with Docker
+This project's `caddy` container does **not** publish 80/443 itself — it's meant to sit
+behind an existing edge reverse proxy on the VPS (another Caddy/nginx already handling
+your other sites). It joins that proxy's Docker network (`EDGE_NETWORK` in `.env`) so it
+can be reached by container name.
+
 ```bash
-cp .env.example .env        # edit POSTGRES_PASSWORD
+cp .env.example .env        # edit POSTGRES_PASSWORD; EDGE_NETWORK must match the edge
+                             # Caddy's external network name (e.g. caddy_network)
 docker compose up --build -d
-docker compose run --rm migrate   # first time only if you didn't rely on the migrate service
 docker compose run --rm api node scripts/seed-tenant.js "My Site"
 ```
-The API is proxied behind Caddy on port 80. Uploaded derivatives are served statically from `/storage/{tenant_id}/{image_id}/{variant}.webp`.
+Then add a site block to the *existing* edge Caddy's Caddyfile:
+```
+cdn.yourdomain.com {
+    reverse_proxy hagumedia_cdn_caddy:80
+}
+```
+
+Uploaded derivatives are served statically from `/storage/{tenant_id}/{image_id}/{variant}.webp`.
 
 ## API
 

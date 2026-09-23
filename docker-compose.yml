@@ -47,11 +47,12 @@ services:
   caddy:
     build:
       context: ./caddy
-    environment:
-      DOMAIN: ${DOMAIN:-:80}
-    ports:
-      - "80:80"
-      - "443:443"
+    container_name: hagumedia_cdn_caddy
+    # No ports published here: an existing edge Caddy on the VPS already owns
+    # 80/443 and reverse-proxies to this container over the shared network below.
+    networks:
+      - default
+      - edge
     volumes:
       - storage:/srv/storage:ro
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
@@ -60,6 +61,11 @@ services:
     depends_on:
       - api
     restart: unless-stopped
+
+networks:
+  edge:
+    external: true
+    name: ${EDGE_NETWORK:?Set EDGE_NETWORK in .env to your existing edge Caddy's docker network}
 
 volumes:
   pgdata:
